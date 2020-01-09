@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf8" />
+    <title>gofile</title>
+    <link rel="stylesheet" href="./bootstrap-3.3.7/css/bootstrap.min.css">
+    <script type="text/javascript" src="./js/jquery.min.js"></script>
+    <script type="text/javascript" src="./bootstrap-3.3.7/js/bootstrap.min.js"></script>
+</head>
+
+<body style="overflow: hidden !important;">
+    <nav class="navbar navbar-default navbar-fixed-top" style="background-color: #009966;">
+        <div class="container navbar-left">
+            <div class="navbar-header">
+                <!--<a class="navbar-brand " href="#">
+                        <img src="img/rtlogo.png" width="25px" height="25px" onclick="menu()">
+                    </a>-->
+                <text class="navbar-text" style="color: white;font-size: 20px;">gosunxifel</text>
+                <text id="linkStat" class="navbar-text" style="color: white;font-size: 20px;"></text>
+            </div>
+        </div>
+    </nav>
+    <div id="contentDis " style="padding-top: 100px; margin-left: 20px">
+        <div class="row">
+            <div class="col-sm-4">
+                <label for="inputCode">地址:</label>
+                <input type="text" id="falshAddr" placeholder="0x00000000" value="0x00000000">
+            </div>
+            <div class="col-sm-4">
+                <button class=" btn btn-success " type="button" id="btnBurn">烧写</button>
+                <button class=" btn btn-success " type="button" id="btnInstallDriver">驱动安装</button>
+            </div>
+        </div>
+        <hr>
+        <div style="margin-left: 20px">
+            <select id="disk" style="width: 80px" onChange="diskSelect()">
+                <option value="0">C:</option>
+                <option value="1">D:</option>
+            </select>
+            <input id="clientpath" type="text" name="">
+            <button class=" btn btn-success " type="button" id="btnPageup">向上</button>
+            <!-- <button class=" btn btn-success " type="button" id="btnupload">上传</button> -->
+            <!-- <input type="text" id="serverpath" name="" style="margin-left: 100px">
+        <button class=" btn btn-success " type="button" id="btnserverPageup">向上</button>
+        <button class=" btn btn-success " type="button" id="btndownload">下载</button> -->
+            <div class="row" style="width: 780px">
+                <div class="col-sm-6" style="border:solid;height: 300px;overflow-y: auto;">
+                    <ul class="list-group" id="clientfiles" style="list-style-type:none">
+                    </ul>
+                </div>
+                <!--  <div class="col-sm-6" style="border:solid;height: 300px;overflow-y: auto;">
+                <ul class="list-group" id="serverfiles" style="list-style-type:none">
+                </ul>
+            </div> -->
+            </div>
+        </div>
+    </div>
+</body>
+<script type="text/javascript">
+var selectname = "";
+var selectname2 = "";
+
+$(function() {
+    var isdb;
+    //客户端
+    $('#clientfiles').on("click", "li", function() {
+     
+        isdb = false;
+        window.setTimeout(cc, 300);
+
+        obj = $(this);
+
+
+        function cc() {
+            if (isdb) {
+                return
+            }
+            $('#clientfiles').find('li').css('background-color', 'white');
+            obj.css('background-color', '#e2f5ff');
+            console.log(obj.text());
+            selectname = obj.text();
+
+            // $('#clientpath').val(selectname);
+        }
+    })
+
+    $('#clientfiles').on("dblclick", "li", async function() {
+     
+        isdb = true;
+        $('#clientfiles').find('li').css('background-color', 'white');
+        $(this).css('background-color', '#e2f5ff');
+        console.log("dblclick", $(this).text());
+        selectname = $(this).text();
+        $('#clientpath').val(selectname);
+        await browseclientpath(selectname);
+    })
+
+    init();
+
+});
+
+
+async function init() {
+    await getdisk(); //更新磁盘
+    isdir = await browseclientpath("");
+    if ((isdir == 0) || (isdir == 3)) {
+
+    } else if (isdir == 1) {
+        // $('#clientpath').val(selectname);
+        console.log("clientpath dis");
+
+    }
+}
+
+
+//客户端操作
+async function diskSelect() {
+    console.log("diskSelect", $('#disk option:selected').val(), $(' option:selected').text());
+     await browseclientpath("disk" + $('#disk option:selected').text());
+}
+
+$('#btnPageup').click(async function() {
+    await browseclientuppage();
+});
+
+$('#btnupload').click(async function() {
+    console.log('btnupload');
+    await upload(selectname);
+});
+
+$('#btnBurn').click(async function(){
+    console.log("btnBurn");
+    addr=$('#falshAddr').val();
+    file=selectname;
+    re=await flashburn(addr,file);
+    
+        alert(re);
+
+
+ 
+});
+
+$('#btnInstallDriver').click(async function(){
+    await installdriver();
+});
+
+</script>
+
+</html>
