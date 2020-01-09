@@ -44,15 +44,16 @@
             <!-- <input type="text" id="serverpath" name="" style="margin-left: 100px">
         <button class=" btn btn-success " type="button" id="btnserverPageup">向上</button>
         <button class=" btn btn-success " type="button" id="btndownload">下载</button> -->
-            <div class="row" style="width: 780px">
+        <label style="margin-left: 30px">信息：</label>
+            <div class="row" style="width: 800px">
                 <div class="col-sm-6" style="border:solid;height: 300px;overflow-y: auto;">
                     <ul class="list-group" id="clientfiles" style="list-style-type:none">
                     </ul>
                 </div>
-                <!--  <div class="col-sm-6" style="border:solid;height: 300px;overflow-y: auto;">
-                <ul class="list-group" id="serverfiles" style="list-style-type:none">
-                </ul>
-            </div> -->
+                <div class="col-sm-6" style="border:solid;height: 300px;overflow-y: auto;">
+                    <ul class="list-group" id="cmdout" style="list-style-type:none;font-size: 10px">
+                    </ul>
+                </div>
             </div>
         </div>
     </div>
@@ -65,7 +66,7 @@ $(function() {
     var isdb;
     //客户端
     $('#clientfiles').on("click", "li", function() {
-     
+
         isdb = false;
         window.setTimeout(cc, 300);
 
@@ -86,13 +87,13 @@ $(function() {
     })
 
     $('#clientfiles').on("dblclick", "li", async function() {
-     
+
         isdb = true;
         $('#clientfiles').find('li').css('background-color', 'white');
         $(this).css('background-color', '#e2f5ff');
         console.log("dblclick", $(this).text());
         selectname = $(this).text();
-        $('#clientpath').val(selectname);
+        $('#clientpath').val($('#clientpath').val() + "/" + selectname);
         await browseclientpath(selectname);
     })
 
@@ -117,7 +118,7 @@ async function init() {
 //客户端操作
 async function diskSelect() {
     console.log("diskSelect", $('#disk option:selected').val(), $(' option:selected').text());
-     await browseclientpath("disk" + $('#disk option:selected').text());
+    await browseclientpath("disk" + $('#disk option:selected').text());
 }
 
 $('#btnPageup').click(async function() {
@@ -129,22 +130,19 @@ $('#btnupload').click(async function() {
     await upload(selectname);
 });
 
-$('#btnBurn').click(async function(){
+$('#btnBurn').click(async function() {
     console.log("btnBurn");
-    addr=$('#falshAddr').val();
-    file=selectname;
-    re=await flashburn(addr,file);
-    
-        alert(re);
+    addr = $('#falshAddr').val();
 
+    re = await flashburn(addr, $('#clientpath').val());
 
- 
+    // alert(re);
+
 });
 
-$('#btnInstallDriver').click(async function(){
+$('#btnInstallDriver').click(async function() {
     await installdriver();
 });
-
 </script>
 
 </html>

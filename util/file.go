@@ -3,6 +3,8 @@ package util
 import (
 	"os"
 	"strings"
+
+	log "github.com/donnie4w/go-logger/logger"
 )
 
 func Exist(filename string) bool {
@@ -37,7 +39,9 @@ func GetParentDirectory(dirctory string) string {
 	if len(dirctory) > 4 { //like D://root
 
 	}
-	re := substr(dirctory, 0, strings.LastIndex(dirctory, `/`))
+	log.Debug(dirctory)
+	re := dirctory[:strings.LastIndex(dirctory, `/`)]
+	log.Debug(re)
 	if len(re) == 3 {
 		if string(dirctory[1]) == ":" {
 			return re + "/"

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"gosunxifel/config"
 	"gosunxifel/util"
+	"strings"
+
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -166,7 +168,7 @@ func Browseclientuppage() {
 	log.Debug(curpath)
 
 	curpath = util.GetParentDirectory(curpath)
-
+	log.Debug(curpath)
 	_, err := os.Stat(curpath)
 	if err != nil {
 		log.Error(err)
@@ -214,12 +216,39 @@ func flashburn(addr string, file string) string {
 	rootdir := config.GetRootdir()
 
 	log.Debug(rootdir + "/sunxi-tools-win32support_f1c100s/sunxi-fel.exe -p spiflash-write " + addr + " " + file)
+
 	cmd := exec.Command("cmd.exe", "/c", rootdir+"/sunxi-tools-win32support_f1c100s/sunxi-fel.exe -p spiflash-write "+addr+" "+file)
-	out, err := cmd.CombinedOutput()
-	err = cmd.Run()
-	log.Debug(err, string(out))
+	stdoutIn, _ := cmd.StdoutPipe()
+
+	err := cmd.Start()
 	if err != nil {
-		fmt.Println(err)
+		log.Error("cmd.Start() failed with '%s'\n", err)
 	}
+
+	jsStr := `$('#cmdout').find("li").remove()`
+	Defaultweb.UI.Eval(jsStr)
+	go func() {
+		for {
+			bs := make([]byte, 1024, 1024)
+			n, err := stdoutIn.Read(bs)
+			if n > 0 {
+				var re string
+				re = string(bs[:n])
+
+				re = re[strings.Index(re, "%")-3 : strings.LastIndex(re, "s")+1]
+
+				jsStr := fmt.Sprintf(`$('#cmdout').append("<li>%s</li>")`, re)
+
+				Defaultweb.UI.Eval(jsStr)
+				log.Debug(re)
+			}
+			if err != nil {
+				return
+			}
+
+		}
+	}()
+
+	err = cmd.Wait()
 	return "烧写完成"
 }
