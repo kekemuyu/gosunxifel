@@ -18,39 +18,51 @@
                     </a>-->
                 <text class="navbar-text" style="color: white;font-size: 20px;">gosunxifel</text>
                 <text id="linkStat" class="navbar-text" style="color: white;font-size: 20px;"></text>
+
             </div>
         </div>
     </nav>
     <div id="contentDis " style="padding-top: 100px; margin-left: 20px">
-        <div class="row">
-            <div class="col-sm-4">
-                <label for="inputCode">地址:</label>
-                <input type="text" id="falshAddr" placeholder="0x00000000" value="0x00000000">
-            </div>
-            <div class="col-sm-4">
-                <button class=" btn btn-success " type="button" id="btnBurn">烧写</button>
-                <button class=" btn btn-success " type="button" id="btnInstallDriver">驱动安装</button>
-            </div>
+        <div>
+            <button class=" btn btn-success " type="button" id="btnInstallDriver">驱动安装</button>
+            <button class=" btn btn-success " type="button" id="">设备探测</button>
+            <button class=" btn btn-success " type="button" id="">BROM信息</button>
+            <button class=" btn btn-success " type="button" id="">SPIFLASH信息</button>
+            <button class=" btn btn-success " type="button" id="btnBurn">一键烧写</button>
         </div>
         <hr>
-        <div style="margin-left: 20px">
-            <select id="disk" style="width: 80px" onChange="diskSelect()">
-                <option value="0">C:</option>
-                <option value="1">D:</option>
-            </select>
-            <input id="clientpath" type="text" name="">
-            <button class=" btn btn-success " type="button" id="btnPageup">向上</button>
-            <!-- <button class=" btn btn-success " type="button" id="btnupload">上传</button> -->
-            <!-- <input type="text" id="serverpath" name="" style="margin-left: 100px">
-        <button class=" btn btn-success " type="button" id="btnserverPageup">向上</button>
-        <button class=" btn btn-success " type="button" id="btndownload">下载</button> -->
-        <label style="margin-left: 30px">信息：</label>
-            <div class="row" style="width: 800px">
-                <div class="col-sm-6" style="border:solid;height: 300px;overflow-y: auto;">
+        <div style="margin-left: 10px">
+            <label for="inputCode">地址:</label>
+            <input type="text" id="falshAddr" size="10" value="0x00000000">
+            <input type="text" id="dir1">
+            <button class=" btn btn-success " type="button" id="btnBurn">添加地址</button>
+            <hr>
+            <div class="row">
+                <div class="col-sm-3">
+                  
+                    <button class=" btn btn-success " type="button" id="btnBurn">清空地址列表</button>
+                </div>
+                <div class="col-sm-8">
+                    <label>文件路径：</label>
+                    <select id="disk" style="width: 80px" onChange="diskSelect()">
+                        <option value="0">C:</option>
+                        <option value="1">D:</option>
+                    </select>
+                    <input id="clientpath" type="text" name="">
+                    <button class=" btn btn-success " type="button" id="btnPageup">向上</button>
+                    <label style="margin-left: 100px">信息：</label>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-3" style="border:solid;height: 300px;overflow-y: auto;">
+                    <ul class="list-group" id="blocklist" style="list-style-type:none">
+                    </ul>
+                </div>
+                <div class="col-sm-4" style="border:solid;height: 300px;overflow-y: auto;">
                     <ul class="list-group" id="clientfiles" style="list-style-type:none">
                     </ul>
                 </div>
-                <div class="col-sm-6" style="border:solid;height: 300px;overflow-y: auto;">
+                <div class="col-sm-5" style="border:solid;height: 300px;overflow-y: auto;">
                     <ul class="list-group" id="cmdout" style="list-style-type:none;font-size: 10px">
                     </ul>
                 </div>

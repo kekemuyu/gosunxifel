@@ -21,6 +21,6 @@ func AppVersion() {
 func main() {
 	ConfigRuntime()
 	AppVersion()
-	Defaultweb = New(850, 600)
+	Defaultweb = New(2560, 1440)
 	Defaultweb.Run()
 }
