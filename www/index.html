@@ -18,29 +18,28 @@
                     </a>-->
                 <text class="navbar-text" style="color: white;font-size: 20px;">gosunxifel</text>
                 <text id="linkStat" class="navbar-text" style="color: white;font-size: 20px;"></text>
-
             </div>
         </div>
     </nav>
     <div id="contentDis " style="padding-top: 100px; margin-left: 20px">
         <div>
             <button class=" btn btn-success " type="button" id="btnInstallDriver">驱动安装</button>
-            <button class=" btn btn-success " type="button" id="">设备探测</button>
-            <button class=" btn btn-success " type="button" id="">BROM信息</button>
-            <button class=" btn btn-success " type="button" id="">SPIFLASH信息</button>
+            <button class=" btn btn-success " type="button" id="btnLoadUsb">设备探测</button>
+            <button class=" btn btn-success " type="button" id="btnLoadBrom">BROM信息</button>
+            <button class=" btn btn-success " type="button" id="btnLoadSpi">SPIFLASH信息</button>
             <button class=" btn btn-success " type="button" id="btnBurn">一键烧写</button>
         </div>
         <hr>
         <div style="margin-left: 10px">
             <label for="inputCode">地址:</label>
-            <input type="text" id="falshAddr" size="10" value="0x00000000">
-            <input type="text" id="dir1">
-            <button class=" btn btn-success " type="button" id="btnBurn">添加地址</button>
+            <input type="text" id="flashAddr" size="10" value="0x00000000">
+            <input type="text" id="flashPath" size="80">
+            <button class=" btn btn-success " type="button" id="btnAddOneBlock">添加地址</button>
             <hr>
             <div class="row">
                 <div class="col-sm-3">
-                  
-                    <button class=" btn btn-success " type="button" id="btnBurn">清空地址列表</button>
+                    <button class=" btn btn-success " type="button" id="btnLoadBlockList">加载地址列表</button>
+                    <button class=" btn btn-success " type="button" id="btnClearBlockList">清空地址列表</button>
                 </div>
                 <div class="col-sm-8">
                     <label>文件路径：</label>
@@ -62,7 +61,7 @@
                     <ul class="list-group" id="clientfiles" style="list-style-type:none">
                     </ul>
                 </div>
-                <div class="col-sm-5" style="border:solid;height: 300px;overflow-y: auto;">
+                <div class="col-sm-4" id="divcmd" style="border:solid;height: 300px;overflow-y: auto;">
                     <ul class="list-group" id="cmdout" style="list-style-type:none;font-size: 10px">
                     </ul>
                 </div>
@@ -73,30 +72,30 @@
 <script type="text/javascript">
 var selectname = "";
 var selectname2 = "";
-
+var curDir = "";
 $(function() {
     var isdb;
     //客户端
-    $('#clientfiles').on("click", "li", function() {
+    // $('#clientfiles').on("click", "li", function() {
 
-        isdb = false;
-        window.setTimeout(cc, 300);
+    //     isdb = false;
+    //     window.setTimeout(cc, 300);
 
-        obj = $(this);
+    //     obj = $(this);
 
 
-        function cc() {
-            if (isdb) {
-                return
-            }
-            $('#clientfiles').find('li').css('background-color', 'white');
-            obj.css('background-color', '#e2f5ff');
-            console.log(obj.text());
-            selectname = obj.text();
+    //     function cc() {
+    //         if (isdb) {
+    //             return
+    //         }
+    //         $('#clientfiles').find('li').css('background-color', 'white');
+    //         obj.css('background-color', '#e2f5ff');
+    //         console.log(obj.text());
+    //         selectname = obj.text();
 
-            // $('#clientpath').val(selectname);
-        }
-    })
+    //         // $('#clientpath').val(selectname);
+    //     }
+    // })
 
     $('#clientfiles').on("dblclick", "li", async function() {
 
@@ -105,8 +104,15 @@ $(function() {
         $(this).css('background-color', '#e2f5ff');
         console.log("dblclick", $(this).text());
         selectname = $(this).text();
-        $('#clientpath').val($('#clientpath').val() + "/" + selectname);
-        await browseclientpath(selectname);
+
+
+        re = await browseclientpath(selectname);
+        if (re != "") {
+            curDir = re;
+        } else {
+            $('#clientpath').val(curDir + "/" + selectname);
+        }
+        $('#flashPath').val($('#clientpath').val());
     })
 
     init();
@@ -116,14 +122,12 @@ $(function() {
 
 async function init() {
     await getdisk(); //更新磁盘
-    isdir = await browseclientpath("");
-    if ((isdir == 0) || (isdir == 3)) {
-
-    } else if (isdir == 1) {
-        // $('#clientpath').val(selectname);
-        console.log("clientpath dis");
+    dir = await browseclientpath("");
+    if (dir != "") {
+        curDir = dir;
 
     }
+    blocklistLoad();
 }
 
 
@@ -142,18 +146,79 @@ $('#btnupload').click(async function() {
     await upload(selectname);
 });
 
-$('#btnBurn').click(async function() {
-    console.log("btnBurn");
-    addr = $('#falshAddr').val();
 
-    re = await flashburn(addr, $('#clientpath').val());
-
-    // alert(re);
-
-});
 
 $('#btnInstallDriver').click(async function() {
     await installdriver();
+});
+
+
+var blockinfo = {
+    Addr: "",
+    Path: ""
+};
+
+var blocklist = [];
+
+
+//地址列表部分
+$('#btnAddOneBlock').click(async function() {
+    console.log("btnAddOneBlock");
+    flashaddr = $('#flashAddr').val();
+    flashpath = $('#flashPath').val();
+    $('#blocklist').append("<li>地址：" + flashaddr + "  " + flashpath + "</li>");
+
+
+
+    blockinfo = {
+        Addr: flashaddr,
+        Path: flashpath,
+    }
+    blocklist.push(blockinfo);
+    await addoneblock(blockinfo);
+
+});
+
+
+//加载列表
+async function blocklistLoad() {
+   bs=await loadblocklist();
+   if(bs.length>0){
+      blocklist=bs;  
+   }
+}
+
+
+$('#btnLoadBlockList').click(function() {
+    console.log("btnLoadBlockList");
+    blocklistLoad();
+
+
+});
+
+//清空列表
+$('#btnClearBlockList').click(async function() {
+    console.log("btnClearBlockList");
+    $('#blocklist').find("li").remove();
+    await clearblocklist();
+    blocklist = [];
+});
+
+$('#btnBurn').click(async function() {
+    console.log("btnBurn");
+    re = await flashburn(blocklist);
+
+});
+
+$('#btnLoadUsb').click(async function(){
+    await loadusb();
+});
+
+$('#btnLoadBrom').click(async function(){
+    await loadbrom();
+});
+$('#btnLoadSpi').click(async function(){
+    await loadspi();
 });
 </script>
 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gosunxifel/config"
 	"gosunxifel/util"
+
 	"strings"
 
 	"io/ioutil"
@@ -16,6 +17,8 @@ import (
 	"strconv"
 
 	log "github.com/donnie4w/go-logger/logger"
+
+	"gosunxifel/sunxifel"
 
 	"github.com/zserge/lorca"
 )
@@ -38,7 +41,6 @@ func New(width, height int) Myweb {
 }
 
 func (m *Myweb) Run() {
-
 	ui := m.UI
 	defer ui.Close()
 
@@ -52,6 +54,15 @@ func (m *Myweb) Run() {
 	ui.Bind("browseclientuppage", Browseclientuppage)
 	ui.Bind("installdriver", installdriver)
 	ui.Bind("flashburn", flashburn)
+	ui.Bind("addoneblock", sunxifel.Default.AddOneBlock)
+	ui.Bind("loadblocklist", loadblocklist)
+	ui.Bind("clearblocklist", clearblocklist)
+
+	//fel功能
+	ui.Bind("loadusb", loadusb)
+	ui.Bind("loadbrom", loadbrom)
+	ui.Bind("loadspi", loadspi)
+
 	// Load HTML.
 	// You may also use `data:text/html,<base64>` approach to load initial HTML,
 	// e.g: ui.Load("data:text/html," + url.PathEscape(html))
@@ -102,7 +113,7 @@ func getdisk() {
 	}
 }
 
-func Browseclientpath(bpath string) byte {
+func Browseclientpath(bpath string) string {
 	curpath := config.Cfg.Section("file").Key("clientpath").MustString(config.GetRootdir())
 	log.Debug(curpath)
 
@@ -127,7 +138,7 @@ func Browseclientpath(bpath string) byte {
 		log.Error(err)
 		log.Debug(config.GetRootdir())
 
-		return 3
+		return ""
 	}
 	if s.IsDir() {
 		files, _ := ioutil.ReadDir(curpath)
@@ -147,7 +158,7 @@ func Browseclientpath(bpath string) byte {
 		config.Cfg.Section("file").Key("clientpath").SetValue(curpath)
 
 		config.Save()
-		return 0
+		return curpath
 	} else {
 		// files, _ := ioutil.ReadDir(curpath)
 		// jsStr1 := `$("#filesgroup").find("li").remove()`
@@ -158,7 +169,7 @@ func Browseclientpath(bpath string) byte {
 		// 	jsStr := fmt.Sprintf(`$('#filesgroup').append("<li>%s</li>")`, f.Name())
 		// 	Defaultweb.UI.Eval(jsStr)
 		// }
-		return 1
+		return ""
 	}
 
 }
@@ -209,15 +220,38 @@ func installdriver() {
 
 }
 
-func flashburn(addr string, file string) string {
-	if addr == "" || file == "" {
-		return "请检查地址或选择的文件是否正确"
-	}
+func flashburn(bs []sunxifel.Blockinfo) {
+	sunxifel.Default.Burn(bs, Defaultweb.UI)
+}
+
+func loadblocklist() []sunxifel.Blockinfo {
+	return sunxifel.Default.LoadBlockList(Defaultweb.UI)
+}
+
+func clearblocklist() {
+	sunxifel.Default.ClearBlockList(Defaultweb.UI)
+}
+
+//cmd信息框清空
+
+func cmdclear() {
+	jsstr := `$('#cmdout').find("li").remove();`
+	Defaultweb.UI.Eval(jsstr)
+}
+
+//cmd信息框输出
+func cmdout(str string) {
+	jsstr := "$('#cmdout').append(\"<li>" + str + "</li>\");"
+	log.Debug(jsstr)
+	Defaultweb.UI.Eval(jsstr)
+}
+
+//cmd 命令执行
+func runcmd(arg string, ui lorca.UI) {
+	cmdclear()
 	rootdir := config.GetRootdir()
 
-	log.Debug(rootdir + "/sunxi-tools-win32support_f1c100s/sunxi-fel.exe -p spiflash-write " + addr + " " + file)
-
-	cmd := exec.Command("cmd.exe", "/c", rootdir+"/sunxi-tools-win32support_f1c100s/sunxi-fel.exe -p spiflash-write "+addr+" "+file)
+	cmd := exec.Command("cmd.exe", "/c", rootdir+"/sunxi-tools-win32support_f1c100s/sunxi-fel.exe  "+arg)
 	stdoutIn, _ := cmd.StdoutPipe()
 
 	err := cmd.Start()
@@ -225,21 +259,15 @@ func flashburn(addr string, file string) string {
 		log.Error("cmd.Start() failed with '%s'\n", err)
 	}
 
-	jsStr := `$('#cmdout').find("li").remove()`
-	Defaultweb.UI.Eval(jsStr)
-	go func() {
+	go func(ui lorca.UI) {
 		for {
 			bs := make([]byte, 1024, 1024)
 			n, err := stdoutIn.Read(bs)
 			if n > 0 {
 				var re string
 				re = string(bs[:n])
-
-				re = re[strings.Index(re, "%")-3 : strings.LastIndex(re, "s")+1]
-
-				jsStr := fmt.Sprintf(`$('#cmdout').append("<li>%s</li>")`, re)
-
-				Defaultweb.UI.Eval(jsStr)
+				re = re[:strings.Index(re, "\n")-1]
+				cmdout(re)
 				log.Debug(re)
 			}
 			if err != nil {
@@ -247,8 +275,20 @@ func flashburn(addr string, file string) string {
 			}
 
 		}
-	}()
+	}(ui)
 
 	err = cmd.Wait()
-	return "烧写完成"
+
+}
+
+func loadusb() {
+	runcmd("-l", Defaultweb.UI)
+}
+
+func loadbrom() {
+	runcmd("ver", Defaultweb.UI)
+}
+
+func loadspi() {
+	runcmd("spiflash-info", Defaultweb.UI)
 }
